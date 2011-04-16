@@ -1,1 +1,1 @@
-(ns bomberman.core)
+(ns se.lcug.bomberman.core)

@@ -1,4 +1,4 @@
-(ns bomberman.test.core
+(ns se.lcug.bomberman.test.core
   (:use [bomberman.core] :reload)
   (:use [clojure.test]))
 
