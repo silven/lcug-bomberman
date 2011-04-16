@@ -1,9 +1,16 @@
 (ns se.lcug.bomberman.world)
 
-(defn- char-to-tile [c]
+(defn- char-to-tile
+  "Translates a single char to a tile to be used in the game world.
+  TODO: Implement using the Tile records"
+  [c]
   {:char c})
 
-(defn- load-ascii [level]
+(defn- load-ascii
+  "Reads a n*m ascii-map representing a game world. Returns a vector
+  [dict spawns]. Where dict maps positions as [x y]to Tile records.
+  Spawns is a list of valid spawnpoints."
+  [level]
   (let [spawnpoints (ref '())
 	world-map (ref {})]
     (dotimes [row (count level)]
@@ -40,4 +47,14 @@
        "w wbwbwbwbwbw w"
        "ws  bbbbbbb  sw"
        "wwwwwwwwwwwwwww" ])
-     
+
+(def lvl-3
+     [ "wwwwwwwwwwwwwwwwwwwwwwwww"
+       "ws  bbbbbbbbbbbbbbbbb  sw"
+       "w wbwbwbwbwbwbwbwbwbwbw w"
+       "wbbbbbbbbbbbbbbbbbbbbbbbw"
+       "wbwbwbwbwbwbwbwbwbwbwbwbw"
+       "wbbbbbbbbbbbbbbbbbbbbbbbw"
+       "w wbwbwbwbwbwbwbwbwbwbw w"
+       "ws  bbbbbbbbbbbbbbbbb  sw"
+       "wwwwwwwwwwwwwwwwwwwwwwwww" ])
