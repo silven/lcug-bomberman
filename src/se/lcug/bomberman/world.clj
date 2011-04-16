@@ -1,33 +1,32 @@
 (ns se.lcug.bomberman.world)
 
+(defn- char-to-tile [c]
+  {:char c})
+
 (defn- load-ascii [level]
   (let [spawnpoints (ref '())
-	world-map (ref {})
-	hmap (vec (for [line level]
-		    (vec (for [c line]
-			   {:char c}))))]
-    (dotimes [row (count hmap)]
-      (dotimes [coll (count (first hmap))]
-	(let [cell (-> hmap (get row) (get coll))]
-	  (if (= \s (:char cell))
+	world-map (ref {})]
+    (dotimes [row (count level)]
+      (dotimes [coll (count (first level))]
+	(let [cell (-> level (get row) (get coll))]
+	  (if (= \s cell) ;; We want to know what cells are spawnpoints.
 	    (dosync
 	     (alter spawnpoints conj [coll row])
-	     (alter world-map assoc [coll row]
-		    {:char \space :pos [coll row]}))
+	     (alter world-map assoc [coll row] (char-to-tile \space)))
 	    (dosync
-	     (alter world-map assoc [coll row] cell))))))
+	     (alter world-map assoc [coll row] (char-to-tile cell)))))))
     [world-map spawnpoints]))
 
 (def lvl-1
      [ "wwwww"
        "ws bw"
-       "w wbw"
-       "wbbbw"
+       "w w w"
+       "wb sw"
        "wwwww" ])
 
 (def lvl-2
      [ "wwwwwwwwwwwwwww"
-       "w   bbbbbbb   w"
+       "ws  bbbbbbb  sw"
        "w wbwbwbwbwbw w"
        "w bbbbbbbbbbb w"
        "wbwbwbwbwbwbwbw"
@@ -39,6 +38,6 @@
        "wbwbwbwbwbwbwbw"
        "w bbbbbbbbbbb w"
        "w wbwbwbwbwbw w"
-       "w   bbbbbbb   w"
+       "ws  bbbbbbb  sw"
        "wwwwwwwwwwwwwww" ])
      
