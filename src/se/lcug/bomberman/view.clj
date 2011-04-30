@@ -36,12 +36,10 @@
     (doseq [cell (:map @world)]
       (let [[[x y] type] cell]
 	(render-cell g (* x tile-w) (* y tile-h) tile-w tile-h type)))
-    (doseq [player (:players @world)]
+    (doseq [player (vals (:players @world))]
       (let [[x y] (:pos player)]
 	(.setColor g (colors (:color player)))
 	(.fillRect g (* x tile-w) (* y tile-h) tile-w tile-h)))))
-
-
 
 (defn- start-view
   "Starts a JFrame watching a given world."

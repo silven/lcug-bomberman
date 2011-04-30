@@ -39,13 +39,15 @@
   "Function that continuously reads from
    client socket and respondes.
    TODO: Handle JSON parsing. Dont override binds."
-  [player socket]
+  [world socket]
   (let [instream (.getInputStream socket)
-	outstream (.getOutputStream socket)]
+	outstream (.getOutputStream socket)
+	me (get (:players @world) socket)
+	controller (get (:controllers @world) socket)]
     (binding [*in* (BufferedReader. (InputStreamReader. instream))
 	      *out* (OutputStreamWriter. outstream)
 	      *err* (PrintWriter. #^OutputStream outstream true)]
-      (println player)
+      (println me)
       (loop []
 	(when-not (.isClosed socket)
 	  (let [command (read-line)]
@@ -78,12 +80,14 @@
   (let [spawns (:spawnpoints @world)]
     (println "Available spawns:" spawns)
     (if (first spawns)
-      (let [player (create-player spawns)]
+      (let [player (create-player spawns)
+	    state (ref {:move? false :dir :left :bomb? false})]
 	(dosync
 	 (alter world update-in [:spawnpoints] pop)
 	 (alter world update-in [:clients] conj socket)
-	 (alter world update-in [:players] conj player))
-	(on-thread #(handle-client player socket)))
+	 (alter world update-in [:players] assoc socket player)
+	 (alter world update-in [:controllers] assoc socket state)
+	 (on-thread #(handle-client world socket))))
       (deny-client-socket socket))))
 
 
