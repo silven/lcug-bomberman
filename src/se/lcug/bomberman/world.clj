@@ -6,15 +6,17 @@
   [c]
   {:char c})
 
-(defn- load-ascii
+(defn load-ascii
   "Reads a n*m ascii-map representing a game world. Returns a vector
   [dict spawns]. Where dict maps positions as [x y]to Tile records.
   Spawns is a list of valid spawnpoints."
   [level]
   (let [spawnpoints (ref '())
-	world-map (ref {})]
-    (dotimes [row (count level)]
-      (dotimes [coll (count (first level))]
+	world-map (ref {})
+	height (count level)
+	width (count (first level))]
+    (dotimes [row height]
+      (dotimes [coll width]
 	(let [cell (-> level (get row) (get coll))]
 	  (if (= \s cell) ;; We want to know what cells are spawnpoints.
 	    (dosync
@@ -22,7 +24,7 @@
 	     (alter world-map assoc [coll row] (char-to-tile \space)))
 	    (dosync
 	     (alter world-map assoc [coll row] (char-to-tile cell)))))))
-    [world-map spawnpoints]))
+    {:width width :height height :map world-map :spawnpoints spawnpoints}))
 
 (def lvl-1
      [ "wwwww"

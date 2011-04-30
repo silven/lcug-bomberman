@@ -1,7 +1,8 @@
 (ns se.lcug.bomberman.server
- (:import (java.net InetAddress ServerSocket Socket SocketException)
-	  (java.io BufferedReader InputStreamReader OutputStreamWriter)))
-
+;;  (:use [clojure.data.json :only (json-str write-json read-json)])
+  (:import (java.net InetAddress ServerSocket Socket SocketException)
+	   (java.io BufferedReader InputStreamReader OutputStreamWriter)))
+  
 (defn- on-thread
   "Helper method to run function in other thread."
   [f]
@@ -16,7 +17,7 @@
 
 (defn create-server
   "Setup a Bomberman game server. Returns the a map with
-   ServerSocket and list of Client Sockets"
+   ServerSocket :server and set of Client Sockets :clients"
   [port]
   (let [server (ServerSocket. port)
 	clients (ref #{})]
@@ -25,7 +26,7 @@
 		  (recur)))
     {:server server :clients clients}))
 
-(defn close-socket
+(defn- close-socket
   "Gracefully shuts down a client socket."
   [#^Socket s]
   (when-not (.isClosed s)
@@ -47,4 +48,5 @@
   (defn run-game []
     (let [server (create-server 9000)
 	  clients (:clients server)]
+      ;; Do stuff in here
       (close-server server))))
