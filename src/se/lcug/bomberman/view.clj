@@ -57,14 +57,6 @@
 		(.setVisible true))]
     (add-watch world :repainter (fn [key refr old new] (.repaint pane)))))
 		
-(defn- start-in-swing [world]
+(defn start-swing-view [world]
   (SwingUtilities/invokeLater #(start-view world)))
-
-(defn init-view
-  "Starter function, subject to be removed."
-  [lvl]
-  (let [world (load-ascii lvl)
-	;; Subject to be fucked over
-	with-players (assoc world :players #{{:pos [0.0 0.0] :color :red} {:pos [1.0 1.5] :color :blue}})]
-    (start-in-swing (ref with-players))))
     

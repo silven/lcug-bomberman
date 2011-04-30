@@ -24,7 +24,7 @@
 	     (alter world-map assoc [coll row] (char-to-tile \space)))
 	    (dosync
 	     (alter world-map assoc [coll row] (char-to-tile cell)))))))
-    {:width width :height height :map @world-map :spawnpoints spawnpoints}))
+    {:width width :height height :map @world-map :spawnpoints @spawnpoints}))
 
 (def lvl-1
      [ "wwwww"
