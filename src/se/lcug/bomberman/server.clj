@@ -36,9 +36,8 @@
 	delta (- now @last-time)]
     (if (>= delta min-update-delay)
       (do (reset! last-time now)
-	  (let [s (:map @world)]
-	    (println s)
-	    (str (json-str (str s)))))
+	    (str (json-str (str (:map @world)))
+		 (json-str (str (vals (:players @world))))))
       (str "DELAY MORE " delta))))
 
 (defn- handle-client
@@ -128,7 +127,7 @@
     (on-thread 
      #(binding [*world* (ref (load-ascii lvl))]
 	(try
-	  (let [server (create-server *world* 10005)]
+	  (let [server (create-server *world* 9005)]
 	    (start-swing-view *world*)
 	    (while @running
 	      ;; TODO: Game loop here.
