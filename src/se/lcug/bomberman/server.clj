@@ -25,9 +25,21 @@
 
 (defn disconnect-client [world socket]
   (when (.isClosed socket)
-    (dosync (alter world update-in [:clients] disj socket)
-		      (alter world update-in [:players] dissoc socket)
-		      (alter world update-in [:controllers] dissoc socket))))
+    (dosync
+     (alter world update-in [:clients] disj socket)
+     (alter world update-in [:players] dissoc socket)
+     (alter world update-in [:controllers] dissoc socket))))
+
+(def min-update-delay 100)
+(defn- calc-update-reply [world last-time]
+  (let [now (System/currentTimeMillis)
+	delta (- now @last-time)]
+    (if (>= delta min-update-delay)
+      (do (reset! last-time now)
+	  (let [s (:map @world)]
+	    (println s)
+	    (str (json-str (str s)))))
+      (str "DELAY MORE " delta))))
 
 (defn- handle-client
   "Function that continuously reads from
@@ -36,22 +48,33 @@
   [world socket]
   (let [instream (.getInputStream socket)
 	outstream (.getOutputStream socket)
-	j-writer (PrintWriter. outstream)
-	controller (get (:controllers @world) socket)]
-    (binding [*in* (BufferedReader. (InputStreamReader. instream))
-	      *out* (OutputStreamWriter. outstream)
-	      *err* (PrintWriter. #^OutputStream outstream true)]
-      (println (json-str (get (:players @world) socket)))
+	writer (PrintWriter. outstream)
+	controller (get (:controllers @world) socket)
+	last-update-time (atom 0)]
+    (binding [*in* (BufferedReader. (InputStreamReader. instream))]
+      (write-json (get (:players @world) socket) writer true)
+      (.println writer "")
+      (.flush writer)
       (while (not (.isClosed socket))
 	;; TODO: Make this a proper blocking statement
 	;; with a time-out.
 	(try 
-	  (let [command (read-line)]
-	    (player/handle-client-command (:map @world)
-					  (vals (:players @world))
-					  controller
-					  command))
+	  (if-let [command (read-line)]
+	    (let [reply-code (player/handle-client-command
+				     controller command)
+		  reply-string
+		  (condp = reply-code
+		      :update (calc-update-reply
+			       world last-update-time)
+		      :unknown "UNKNOWN"
+		      "OK")]
+	      (when reply-string
+		(.println writer reply-string)
+		(.flush writer)))
+	    (throw (Exception. "Broken pipe! FIX MEEE")))
 	  (catch Exception e
+	    (println e)
+	    (.printStackTrace e)
 	    (close-socket socket)
 	    (disconnect-client world socket)))))
     (close-socket socket)))
@@ -87,6 +110,8 @@
   [world port]
   (dosync (alter world assoc :clients #{}))
   (let [server (ServerSocket. port)]
+    ;; TODO: Handle exception thrown by this thread
+    ;; whenever server closes.
     (on-thread #(while (not (.isClosed server))
 		  (accept-fn (.accept server) world)))
     server))
@@ -103,7 +128,7 @@
     (on-thread 
      #(binding [*world* (ref (load-ascii lvl))]
 	(try
-	  (let [server (create-server *world* 9004)]
+	  (let [server (create-server *world* 10005)]
 	    (start-swing-view *world*)
 	    (while @running
 	      ;; TODO: Game loop here.

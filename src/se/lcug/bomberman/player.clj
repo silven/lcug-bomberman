@@ -13,7 +13,7 @@
 
 (defn handle-client-command
   "Function that translates a command-string to state-change."
-  [world-map players me cmd]
+  [me cmd]
   (condp = cmd
       "UP"      (move me :up)
       "DOWN"    (move me :down)
@@ -22,9 +22,8 @@
       "BOMB"    (dosync (alter me :bomb? true))
       "STOP"    (dosync (alter me :move? false))
       ;; TODO: Rewrite the update function, give it a limit
-      "UPDATE"  (do (println world-map)
-		    (println players))
-      (println "UNKNOWN COMMAND")))
+      "UPDATE"  :update
+      :unknown))
 
 (defn create-player
   "Create a player, in the world at the givven spawn point."
