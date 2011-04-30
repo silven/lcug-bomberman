@@ -14,7 +14,7 @@
       (ImageIO/read (io/input-stream res))
       (println (str "Could not load file: " full-name)))))
 
-(def colors {:red Color/RED :blue Color/BLUE})
+(def colors (sorted-map :red Color/RED :blue Color/BLUE))
 
 (def tileset (let [names '("bomberman" "fire-cap-south" "fire-horizontal"  "tile-bomb"
 "fire-cap-east" "fire-cap-west" "fire-vertical" "tile-wall"
