@@ -1,5 +1,5 @@
 (ns se.lcug.bomberman.server
-  ;;  (:use [clojure.data.json :only (json-str write-json read-json)])
+  (:use [clojure.data.json :only (json-str write-json read-json)])
   (:use [se.lcug.bomberman.world]
 	[se.lcug.bomberman.view :only (start-swing-view)])
   (:import (java.net InetAddress ServerSocket Socket SocketException)
@@ -42,12 +42,13 @@
   [world socket]
   (let [instream (.getInputStream socket)
 	outstream (.getOutputStream socket)
+	j-writer (PrintWriter. outstream)
 	me (get (:players @world) socket)
 	controller (get (:controllers @world) socket)]
     (binding [*in* (BufferedReader. (InputStreamReader. instream))
 	      *out* (OutputStreamWriter. outstream)
 	      *err* (PrintWriter. #^OutputStream outstream true)]
-      (println me)
+      (println (json-str me))
       (loop []
 	(when-not (.isClosed socket)
 	  (let [command (read-line)]
