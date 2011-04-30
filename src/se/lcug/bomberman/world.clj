@@ -1,10 +1,13 @@
-(ns se.lcug.bomberman.world)
+(ns se.lcug.bomberman.world
+  (:use [se.lcug.bomberman.tile]))
 
 (defn- char-to-tile
-  "Translates a single char to a tile to be used in the game world.
-  TODO: Implement using the Tile records"
+  "Translates a single char to a tile to be used in the game world."
   [c]
-  {:char c})
+  (condp = c
+      \space nil
+      \b (block)
+      \w (wall)))
 
 (defn load-ascii
   "Reads a n*m ascii-map representing a game world. Returns a vector

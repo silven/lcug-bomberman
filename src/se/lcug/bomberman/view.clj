@@ -1,5 +1,6 @@
 (ns se.lcug.bomberman.view
   (:require [clojure.java.io :as io])
+  (:use [se.lcug.bomberman.tile])
   (:import (java.awt Graphics Color Dimension Image)
 	   (javax.swing JFrame JPanel SwingUtilities)
 	   (java.io File)
@@ -28,7 +29,9 @@
 
 
 (defn- render-cell [g x y width height tile]
-  (.drawImage g (:bomberman tileset) x y width height nil))
+  (let [k (sprite tile)]
+    (println k)
+    (.drawImage g (k tileset) x y width height nil)))
 
 (defn- do-render [this #^Graphics g world]
   (let [w (.getWidth this)
