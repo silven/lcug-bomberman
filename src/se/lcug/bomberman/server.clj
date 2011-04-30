@@ -128,11 +128,12 @@
     (on-thread 
      #(binding [*world* (ref (load-ascii lvl))]
 	(try
-	  (let [server (create-server *world* 9007)]
+	  (let [server (create-server *world* 9011)]
 	    (start-swing-view *world*)
 	    (while @running
-	      ;; TODO: Game loop here.
-	      (Thread/sleep 100))
+	      (println "running game loop")
+	      (player/update-players-by-action *world*)
+	      (Thread/sleep 1000))
 	    (close-server server))
 	  (catch Exception e
 	    (println "Server got exception" e)
