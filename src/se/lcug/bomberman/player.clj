@@ -2,7 +2,7 @@
   (:use [se.lcug.bomberman.view :only (colors)]))
 
 (defn get-proper-color [n]
-  (get (keys colors) (- (count (keys colors)) n)))
+  (get (vec (keys colors)) (- (count (keys colors)) n)))
 
 (defn- move
   "Change the state of a controller to indicate
