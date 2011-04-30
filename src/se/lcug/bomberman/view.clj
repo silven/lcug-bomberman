@@ -1,5 +1,4 @@
 (ns se.lcug.bomberman.view
-  (:use [se.lcug.bomberman.world :only (load-ascii lvl-1 lvl-2 lvl-3)])
   (:require [clojure.java.io :as io])
   (:import (java.awt Graphics Color Dimension Image)
 	   (javax.swing JFrame JPanel SwingUtilities)
@@ -7,20 +6,25 @@
 	   (java.awt.event KeyAdapter)
 	   (javax.imageio ImageIO)))
 
-(defn read-image [name]
-  (let [full-name (str "se/lcug/bomberman/" name ".png")
-	res (io/resource full-name)]
-    (if res
-      (ImageIO/read (io/input-stream res))
-      (println (str "Could not load file: " full-name)))))
+(defn- read-image [name]
+  (let [image (ImageIO/read name)]
+    image))
 
-(def colors (sorted-map :red Color/RED :blue Color/BLUE))
+(def colors (sorted-map
+	     :white Color/WHITE
+	     :red Color/RED
+	     :green Color/GREEN
+	     :blue Color/BLUE
+	     :black Color/BLACK))
 
-(def tileset (let [names '("bomberman" "fire-cap-south" "fire-horizontal"  "tile-bomb"
-"fire-cap-east" "fire-cap-west" "fire-vertical" "tile-wall"
-"fire-cap-north" "fire-cross" "tile-block")]
-	       (into {} (for [name names]
-			  [(keyword name) (read-image name)]))))
+(defn- base-name [file]
+  (let [name (.getName file)]
+    (.substring name 0 (.lastIndexOf name "."))))
+
+(def tileset (let [files  (file-seq (File. "resources/se/lcug/bomberman"))
+		   images (for [f files :when (not (.isDirectory f))] f)]
+	       (into {} (for [name images]
+			  [(keyword (base-name name)) (read-image name)]))))
 
 
 (defn- render-cell [g x y width height tile]

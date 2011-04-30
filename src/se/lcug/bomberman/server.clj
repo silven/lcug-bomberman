@@ -1,14 +1,12 @@
 (ns se.lcug.bomberman.server
-  (:use [clojure.data.json :only (json-str write-json read-json)])
-  (:use [se.lcug.bomberman.world]
-	[se.lcug.bomberman.view :only (start-swing-view colors)])
+  (:use [clojure.data.json :only (json-str write-json read-json)]
+        [se.lcug.bomberman.world]
+	[se.lcug.bomberman.view :only (start-swing-view colors)]
+	[se.lcug.bomberman.player :as player])
   (:import (java.net InetAddress ServerSocket Socket SocketException)
 	   (java.io BufferedReader InputStreamReader OutputStream OutputStreamWriter PrintWriter)))
 
 (declare *world*)
-
-(defn get-proper-color [n]
-  (get (keys colors) (- (count (keys colors)) n)))
 
 (defn- on-thread
   "Helper method to run function in other thread."
@@ -24,25 +22,6 @@
       (.shutdownInput)
       (.shutdownOutput)
       (.close))))
-
-(defn move [controller dir]
-  (dosync (alter controller :dir dir)
-	  (alter controller :move? true)))
-
-(defn handle-client-command
-  "Function that translates a command-string to state-change."
-  [world-map players me cmd]
-  (condp = cmd
-      "UP"      (move me :up)
-      "DOWN"    (move me :down)
-      "LEFT"    (move me :left)
-      "RIGHT"   (move me :right)
-      "BOMB"    (dosync (alter me :bomb? true))
-      "STOP"    (dosync (alter me :move? false))
-      ;; TODO: Rewrite the update function, give it a limit
-      "UPDATE"  (do (println world-map)
-		    (println players))
-      (println "UNKNOWN COMMAND")))
 
 (defn- handle-client
   "Function that continuously reads from
@@ -63,7 +42,7 @@
 	  ;; TODO: Make this a proper blocking statement
 	  ;; with a time-out.
 	  (let [command (read-line)]
-	    (handle-client-command (:map @world)
+	    (player/handle-client-command (:map @world)
 				   (vals (:players @world))
 				   controller
 				   command))
@@ -79,23 +58,13 @@
     (.flush outwriter)
     (close-socket s)))
 
-(defn create-player
-  "Create a player, in the world at the givven spawn point."
-  [spawns]
-  {:alive? true
-   :pos (vec (map #(+ 0.5 %) (first spawns)))
-   :max-bombs 1
-   :flame-lenght 2
-   :speed 1
-   :color (get-proper-color (count spawns))})
-
 (defn- accept-fn
   "Function to add client to game client pool and create player.."
   [#^Socket socket world]
   (let [spawns (:spawnpoints @world)]
     (println "Available spawns:" spawns)
     (if (first spawns)
-      (let [player (create-player spawns)
+      (let [player (player/create-player spawns)
 	    state (ref {:move? false :dir :left :bomb? false})]
 	(dosync
 	 (alter world update-in [:spawnpoints] pop)
@@ -104,7 +73,6 @@
 	 (alter world update-in [:controllers] assoc socket state)
 	 (on-thread #(handle-client world socket))))
       (deny-client-socket socket))))
-
 
 (defn create-server
   "Setup a Bomberman game server. Returns the a map with
