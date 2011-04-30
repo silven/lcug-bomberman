@@ -1,9 +1,10 @@
 (ns se.lcug.bomberman.view
-  (:use [se.lcug.bomberman.world :only (load-ascii lvl-1)])
+  (:use [se.lcug.bomberman.world :only (load-ascii lvl-1 lvl-2 lvl-3)])
   (:require [clojure.java.io :as io])
   (:import (java.awt Graphics Color Dimension Image)
 	   (javax.swing JFrame JPanel SwingUtilities)
 	   (java.io File)
+	   (java.awt.event KeyAdapter)
 	   (javax.imageio ImageIO)))
 
 (defn read-image [name]
@@ -13,6 +14,8 @@
       (ImageIO/read (io/input-stream res))
       (println (str "Could not load file: " full-name)))))
 
+(def colors {:red Color/RED :blue Color/BLUE})
+
 (def tileset (let [names '("bomberman" "fire-cap-south" "fire-horizontal"  "tile-bomb"
 "fire-cap-east" "fire-cap-west" "fire-vertical" "tile-wall"
 "fire-cap-north" "fire-cross" "tile-block")]
@@ -20,23 +23,23 @@
 			  [(keyword name) (read-image name)]))))
 
 
-(def counter (atom 0))
-
-(defn- render-cell [g width height tile]
-  (.drawImage g (:bomberman tileset) 0 0 width height nil))
+(defn- render-cell [g x y width height tile]
+  (.drawImage g (:bomberman tileset) x y width height nil))
 
 (defn- do-render [this #^Graphics g world]
-  (let [w (.getWidth this) 
+  (let [w (.getWidth this)
 	h (.getHeight this)
-	world-w (:width world)
-	world-h (:height world)
-	tile-w (/ w world-w)
-	tile-h (/ h world-h)]
-    (doseq [row (range world-h)]
-	   (doseq [col (range world-w)]
-		  (render-cell g tile-w tile-h ((:map world) [col row]))
-		  (.translate g tile-w 0))
-	   (.translate g (- w) tile-h))))
+	world-w (:width @world)
+	world-h (:height @world)
+	tile-w (int (/ w world-w))
+	tile-h (int (/ h world-h))]
+    (doseq [cell (:map @world)]
+      (let [[[x y] type] cell]
+	(render-cell g (* x tile-w) (* y tile-h) tile-w tile-h type)))
+    (doseq [player (:players @world)]
+      (let [[x y] (:pos player)]
+	(.setColor g (colors (:color player)))
+	(.fillRect g (* x tile-w) (* y tile-h) tile-w tile-h)))))
 
 
 
@@ -47,13 +50,12 @@
 	       (paintComponent [#^Graphics g]
 			       (do-render this g world)))
 	       (.setPreferredSize (new Dimension 640 480)))
-	frame (doto (new JFrame "LCUG Bomberman")
+	frame (doto (new JFrame "LCUG Bomberman 0.1")
 		(.setContentPane pane)
 		(.pack)
 		(.setLocationRelativeTo nil)
 		(.setVisible true))]
-    ;;(add-watcher world #(.repaint pane))
-    ))
+    (add-watch world :repainter (fn [key refr old new] (.repaint pane)))))
 		
 (defn- start-in-swing [world]
   (SwingUtilities/invokeLater #(start-view world)))
@@ -61,6 +63,8 @@
 (defn init-view
   "Starter function, subject to be removed."
   [lvl]
-  (let [world (load-ascii lvl)]
-    (start-in-swing world)))
+  (let [world (load-ascii lvl)
+	;; Subject to be fucked over
+	with-players (assoc world :players #{{:pos [0.0 0.0] :color :red} {:pos [1.0 1.5] :color :blue}})]
+    (start-in-swing (ref with-players))))
     
