@@ -30,7 +30,6 @@
 
 (defn- render-cell [g x y width height tile]
   (let [k (sprite tile)]
-    (println k)
     (.drawImage g (k tileset) x y width height nil)))
 
 (defn- do-render [this #^Graphics g world]
@@ -40,13 +39,16 @@
 	world-h (:height @world)
 	tile-w (int (/ w world-w))
 	tile-h (int (/ h world-h))]
+    (.clearRect g 0 0 w h)
     (doseq [cell (:map @world)]
       (let [[[x y] type] cell]
 	(render-cell g (* x tile-w) (* y tile-h) tile-w tile-h type)))
+    (.translate g (int (- (/ tile-w 2))) (int (- (/ tile-h 2))))
     (doseq [player (vals (:players @world))]
       (let [[x y] (:pos player)]
 	(.setColor g (colors (:color player)))
-	(.fillRect g (* x tile-w) (* y tile-h) tile-w tile-h)))))
+	(.fillRect g (* x tile-w) (* y tile-h) tile-w tile-h)))
+    (.translate g (int (/ tile-w 2)) (int (/ tile-h 2)))))
 
 (defn- start-view
   "Starts a JFrame watching a given world."
