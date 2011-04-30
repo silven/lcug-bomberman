@@ -3,7 +3,7 @@
         [se.lcug.bomberman.world]
 	[se.lcug.bomberman.view :only (start-swing-view colors)]
 	[se.lcug.bomberman.player :as player])
-  (:import (java.net InetAddress ServerSocket Socket SocketException)
+  (:import (java.net InetAddress InetSocketAddress ServerSocket Socket SocketException)
 	   (java.io BufferedReader InputStreamReader OutputStream OutputStreamWriter PrintWriter)))
 
 (declare *world*)
@@ -23,6 +23,12 @@
       (.shutdownOutput)
       (.close))))
 
+(defn disconnect-client [world socket]
+  (when (.isClosed socket)
+    (dosync (alter world update-in [:clients] disj socket)
+		      (alter world update-in [:players] dissoc socket)
+		      (alter world update-in [:controllers] dissoc socket))))
+
 (defn- handle-client
   "Function that continuously reads from
    client socket and respondes.
@@ -31,24 +37,25 @@
   (let [instream (.getInputStream socket)
 	outstream (.getOutputStream socket)
 	j-writer (PrintWriter. outstream)
-	me (get (:players @world) socket)
 	controller (get (:controllers @world) socket)]
     (binding [*in* (BufferedReader. (InputStreamReader. instream))
 	      *out* (OutputStreamWriter. outstream)
 	      *err* (PrintWriter. #^OutputStream outstream true)]
-      (println (json-str me))
-      (loop []
-	(when-not (.isClosed socket)
-	  ;; TODO: Make this a proper blocking statement
-	  ;; with a time-out.
+      (println (json-str (get (:players @world) socket)))
+      (while (not (.isClosed socket))
+	;; TODO: Make this a proper blocking statement
+	;; with a time-out.
+	(try 
 	  (let [command (read-line)]
 	    (player/handle-client-command (:map @world)
-				   (vals (:players @world))
-				   controller
-				   command))
-	  (recur))))
+					  (vals (:players @world))
+					  controller
+					  command))
+	  (catch Exception e
+	    (close-socket socket)
+	    (disconnect-client world socket)))))
     (close-socket socket)))
-
+  
 (defn- deny-client-socket
   "Function that informs client that they cannot connect."
   [s]
@@ -78,10 +85,10 @@
   "Setup a Bomberman game server. Returns the a map with
    ServerSocket :server and set of Client Sockets :clients"
   [world port]
+  (dosync (alter world assoc :clients #{}))
   (let [server (ServerSocket. port)]
-    (on-thread #(when-not (.isClosed server)
-		  (accept-fn (.accept server) world)
-		  (recur)))
+    (on-thread #(while (not (.isClosed server))
+		  (accept-fn (.accept server) world)))
     server))
   
 (defn- close-server
@@ -95,9 +102,14 @@
   (let [running (atom true)]
     (on-thread 
      #(binding [*world* (ref (load-ascii lvl))]
-	(let [server (create-server *world* 9004)]
-	  (start-swing-view *world*)
-	  (while @running
-	    (Thread/sleep 100))
-	  (close-server server))))
+	(try
+	  (let [server (create-server *world* 9004)]
+	    (start-swing-view *world*)
+	    (while @running
+	      ;; TODO: Game loop here.
+	      (Thread/sleep 100))
+	    (close-server server))
+	  (catch Exception e
+	    (println "Server got exception" e)
+	    (.printStackTrace e)))))
   running))
