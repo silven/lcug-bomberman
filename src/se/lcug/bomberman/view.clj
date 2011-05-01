@@ -27,13 +27,18 @@
 	       (into {} (for [name images]
 			  [(keyword (base-name name)) (read-image name)]))))
 
+(def pad-map {:none :neutral-pad
+	      :left :left-pad
+	      :right :right-pad
+	      :up :up-pad
+	      :down :down-pad})
 
 (defn- render-cell [g x y width height tile]
   (let [k (sprite tile)]
     (.drawImage g (k tileset) x y width height nil)))
 
 (defn- do-render [this #^Graphics g world]
-  (let [w (.getWidth this)
+  (let [w (int (* (.getWidth this) 0.8)) ;; Leave 20% 
 	h (.getHeight this)
 	world-w (:width @world)
 	world-h (:height @world)
@@ -48,7 +53,23 @@
       (let [[x y] (:pos player)]
 	(.setColor g (colors (:color player)))
 	(.fillRect g (* x tile-w) (* y tile-h) tile-w tile-h)))
-    (.translate g (int (/ tile-w 2)) (int (/ tile-h 2)))))
+    (.translate g (int (/ tile-w 2)) (int (/ tile-h 2)))
+    (.translate g w 0)
+    (.setColor g Color/GRAY)
+    (.fillRect g 0 0 w h)
+    (.setColor g Color/BLACK)
+    (doseq [key (:clients @world)]
+      (let [control @(get (:controllers @world) key)
+	    player (get (:players @world) key)
+	    image (tileset
+		   (pad-map
+		    (if (:move? control)
+		      (:dir control)
+		      :none)))]
+	(.drawImage g image 0 0 100 100 nil)
+	(.drawString g (:name player) 10 15)
+	(.drawString g (str (:color player)) 100 15)
+	(.translate g 0 100)))))
 
 (defn- start-view
   "Starts a JFrame watching a given world."
@@ -62,7 +83,8 @@
 		(.pack)
 		(.setLocationRelativeTo nil)
 		(.setVisible true))]
-    (add-watch world :repainter (fn [key refr old new] (.repaint pane)))))
+    (add-watch world :repainter
+	       (fn [key refr old new] (.repaint pane)))))
 		
 (defn start-swing-view [world]
   (SwingUtilities/invokeLater #(start-view world)))

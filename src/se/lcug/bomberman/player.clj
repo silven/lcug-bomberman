@@ -48,12 +48,9 @@
 	(assoc player :pos [nx ny])))
 		    
 (defn update-players-by-action [aworld]
-  (println "WORKING ON DA" (:controllers @aworld))
   (doseq [key (:clients @aworld)]
     (let [control @((:controllers @aworld) key)
 	  player ((:players @aworld) key)]
-      (println "UPDATING" player)
-      (println "USING" control)
       (when (:move? control)
 	(dosync (alter aworld update-in [:players]
 		       assoc key (move-player

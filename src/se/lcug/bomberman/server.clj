@@ -41,6 +41,9 @@
 		     :players (vals (:players @world))}))
       (str "DELAY MORE " delta))))
 
+(defn- name-player [world socket name]
+  (dosync (alter world update-in [:players socket] assoc :name name)))
+
 (defn- handle-client
   "Function that continuously reads from
    client socket and respondes.
@@ -52,6 +55,7 @@
 	controller (get (:controllers @world) socket)
 	last-update-time (atom 0)]
     (binding [*in* (BufferedReader. (InputStreamReader. instream))]
+      (name-player world socket (read-line))
       (write-json (get (:players @world) socket) writer true)
       (.println writer "")
       (.flush writer)
