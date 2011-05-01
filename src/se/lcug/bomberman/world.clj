@@ -64,4 +64,33 @@
        "ws  bbbbbb  bbbbbbbbb  sw"
        "wwwwwwwwwwwwwwwwwwwwwwwww" ])
 
+(defn- ws [len]
+  (seq (for [i (range len)] "w")))
 
+(defn- some-bs [len]
+  (seq (for [i (range len)] (rand-nth "b bb"))))
+
+(defn- some-wbs [len]
+  (concat (interleave (ws (/ len 2)) (some-bs (/ len 2))) "w"))
+
+(defn random-lvl
+  "Function to generate larger random maps. Size 13x11 and above (Note: sizes will be made UNeven by inc if needed)"
+  [w h]
+  (let [width (if (even? w) (inc w) w)
+	height (if (even? h) (inc h) h)
+	bsfn #(apply str (some-bs (- %1 %2)))
+	wbsfn #(apply str (some-wbs (- %1 %2 2)))
+
+	end-piece #(seq [(apply str (ws width)) 
+			 (str "ws  b" (bsfn width 10) "b  sw")
+			 (str "w wb"  (wbsfn width 8)  "bw w")
+			 (str "w bb"  (bsfn width 8)   "bb w")
+			 (str "wb"    (wbsfn width 4)    "bw")])
+	middle nil
+	]
+    (vec (concat (end-piece)
+		 (concat (for [f (take (- height 10)
+		       (cycle (list #(str "w" (bsfn width 2) "w")
+				    #(str (wbsfn width 0)))))]
+			   (f)))
+		 (reverse (end-piece))))))
