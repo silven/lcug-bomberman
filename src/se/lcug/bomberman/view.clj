@@ -65,11 +65,12 @@
 		   (pad-map
 		    (if (:move? control)
 		      (:dir control)
-		      :none)))]
-	(.drawImage g image 0 0 100 100 nil)
+		      :none)))
+	    pad-size (int (/ w 4))]
+	(.drawImage g image 0 0 pad-size pad-size nil)
 	(.drawString g (:name player) 10 15)
-	(.drawString g (str (:color player)) 100 15)
-	(.translate g 0 100)))))
+	(.drawString g (str (:color player)) pad-size 15)
+	(.translate g 0 pad-size)))))
 
 (defn- start-view
   "Starts a JFrame watching a given world."

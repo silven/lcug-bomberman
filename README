@@ -1,13 +1,20 @@
 # Bomberman
 
-A tournament system for Bomberman AI bots
+A (to be) tournament system for Bomberman AI bots. A server accepts 4 bots connected over the network,
+then allowes them to battle to the death! Scores will be keept so you can know which bot is the best.
 
 ## Usage
 
-No usage yet. 
+A Game can be setup via the run-game [lvl] method in the se.lcug.bomberman.server namespace. 
+Feed it a map from the world namespace. For example: (run-game [lvl-3])
+Be sure to catch the returned atom so you can shut down the server socket gracefully.
+
+Connect clients to the server on the specified port. A detailed documentation of the protocol
+will be made when we have finalized it. In short however, you can send text commands to
+manipulate the controller, pretty much just as you play normal bomberman on a console as a human being.
 
 ## License
 
-Copyright (C) 2010 FIXME
+Copyright (C) 2011 Linköping Clojure User Group
 
 Distributed under the Eclipse Public License, the same as Clojure.

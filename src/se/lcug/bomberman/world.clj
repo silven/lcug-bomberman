@@ -86,11 +86,13 @@
 			 (str "w wb"  (wbsfn width 8)  "bw w")
 			 (str "w bb"  (bsfn width 8)   "bb w")
 			 (str "wb"    (wbsfn width 4)    "bw")])
-	middle nil
+	middle (concat
+		(for [f (take (- height 10)
+			      (cycle (list
+				      #(str "w" (bsfn width 2) "w")
+				      #(str (wbsfn width 0)))))]
+		  (f)))
 	]
     (vec (concat (end-piece)
-		 (concat (for [f (take (- height 10)
-		       (cycle (list #(str "w" (bsfn width 2) "w")
-				    #(str (wbsfn width 0)))))]
-			   (f)))
+		 middle
 		 (reverse (end-piece))))))
