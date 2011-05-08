@@ -75,10 +75,9 @@
 	      (when reply-string
 		(.println writer reply-string)
 		(.flush writer)))
-	    (throw (Exception. "Broken pipe! FIX MEEE")))
+	    (throw (Exception. "Broken pipe")))
 	  (catch Exception e
-	    (println e)
-	    (.printStackTrace e)
+	    (println "Client dropped from game")
 	    (close-socket socket)
 	    (disconnect-client world socket)))))
     (close-socket socket)))
@@ -110,14 +109,14 @@
 
 (defn create-server
   "Setup a Bomberman game server. Returns the a map with
-   ServerSocket :server and set of Client Sockets :clients"
+   set of Client Sockets :clients"
   [world port]
   (dosync (alter world assoc :clients #{}))
   (let [server (ServerSocket. port)]
-    ;; TODO: Handle exception thrown by this thread
-    ;; whenever server closes.
     (on-thread #(while (not (.isClosed server))
-		  (accept-fn (.accept server) world)))
+		  (try (accept-fn (.accept server) world)
+		       (catch SocketException e
+			 (println "Server Socket closed while accepting. Normal termination.")))))
     server))
   
 (defn- close-server
@@ -127,12 +126,12 @@
     (close-socket client))
   (.close #^ServerSocket server))
 
-(defn run-game [lvl]
+(defn run-game [lvl port]
   (let [running (atom true)]
     (on-thread 
      #(binding [*world* (ref (load-ascii lvl))]
 	(try
-	  (let [server (create-server *world* 9011)]
+	  (let [server (create-server *world* port)]
 	    (start-swing-view *world*)
 	    (while @running
 	      (println "running game loop")
